@@ -51,19 +51,19 @@
               const found = POPULAR_CONSENT_MANAGER_DOMAINS.some(popularDomain => filePath.includes(popularDomain));
               if (found) {
                 isConsentManagerDeletingCookie = true;
-                console.log('Culprit: ', { filePath, cookieName, cookieValue, value })
+                console.log('AAA: ', { filePath, cookieName, cookieValue, value })
                 break;
               }
             }
             if (!isConsentManagerDeletingCookie) {
-              console.log('Non_Culprit: ', { cookieName, cookieValue })
+              console.log('BBB: ', { cookieName, cookieValue })
             }
           } else {
-            console.log('non_expiry', expiryDate, value)
+            console.log('CCC', expiryDate, value)
           }
 
         } else {
-          console.log('Expire is not present...', value)
+          console.log('DDD', value)
         }
         cookieDescriptor.set.call(document, value);
       }
