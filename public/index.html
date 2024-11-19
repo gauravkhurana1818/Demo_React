@@ -24,7 +24,7 @@
 
   <script type="text/javascript">
     console.log("COOKIE_OVERRIDE....");
-    const POPULAR_CONSENT_MANAGER_DOMAINS = ['consent.cookiebot.com']
+    const POPULAR_CONSENT_MANAGER_DOMAINS = ['consent.cookiebot.com','cookie-script.com']
     const cookieDescriptor = Object.getOwnPropertyDescriptor(Document.prototype, 'cookie');
     Object.defineProperty(document, 'cookie', {
       configurable: true,
