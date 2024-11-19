@@ -23,50 +23,50 @@
   <title>React App</title>
 
   <script type="text/javascript">
+    
     console.log("COOKIE_OVERRIDE....");
 
-    // Store the original document.cookie descriptor
-    const cookieDescriptor = Object.getOwnPropertyDescriptor(Document.prototype, 'cookie');
-    Object.defineProperty(document, 'cookie', {
-      configurable: true,
-      enumerable: true,
-      get: function () {
-        return cookieDescriptor.get.call(document);
-      },
-      set: function (value) {
-        // console.log("Cookie set: ", value);
-        if (/; *expires *= *([^;]+);/i.test(value)) {
-          const expiryDate = new Date(RegExp.$1);
-          if (expiryDate < new Date()) {
-            // console.log('Expiry: ');
-            const err = new Error();
-            const stackTrace = err.stack; // Access the stack trace
-            const regex = /(?:at\s+.*?\(|@)?(.*?):(\d+):(\d+)/g;
-            let match;
-            while ((match = regex.exec(stackTrace)) !== null) {
-              const [_, file, line, column] = match;
-              console.log('META_EXPIRY', file, value)
+    (function () {
+
+      const POPULAR_CONSENT_MANAGER_DOMAINS = ['consent.cookiebot.com']
+      const cookieDescriptor = Object.getOwnPropertyDescriptor(Document.prototype, 'cookie');
+
+      Object.defineProperty(document, 'cookie', {
+        configurable: true,
+        enumerable: true,
+        get: function () {
+          return cookieDescriptor.get.call(document);
+        },
+        set: function (value) {
+          if (/; *expires *= *([^;]+);/i.test(value)) {
+            const expiryDate = new Date(RegExp.$1);
+            if (expiryDate < new Date()) {
+              const { stack: stackTrace } = new Error();
+              const COOKIE_REGEX = /([^;=\s]+)=([^;]*)/g;
+              let cookie = COOKIE_REGEX.exec(value);
+              const cookieName = cookie[1];  // Cookie name
+              const cookieValue = cookie[2]; // Cookie value
+              let isConsentManagerDeletingCookie = false;
+              let match;
+              const ERROR_STACK_TRACE_REGEX = /(?:at\s+.*?\(|@)?(.*?):(\d+):(\d+)/g;
+              while ((match = ERROR_STACK_TRACE_REGEX.exec(stackTrace)) !== null) {
+                const [_, filePath, __, ___] = match;
+                const found = POPULAR_CONSENT_MANAGER_DOMAINS.some(popularDomain => filePath.includes(popularDomain));
+                if (found) {
+                  isConsentManagerDeletingCookie = true;
+                  console.log('Culprit: ', { file, cookieName, cookieValue, value })
+                  break;
+                }
+              }
+              if (!isConsentManagerDeletingCookie) {
+                console.log('Non_Culprit: ', { cookieName, cookieValue })
+              }
             }
           }
+          cookieDescriptor.set.call(document, value);
         }
-        cookieDescriptor.set.call(document, value);
-      }
-    })
-
-    function deleteCookie(cookieName) {
-      // Set the cookie's value to empty and expiration date to the past
-      document.cookie = cookieName + "=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-    }
-
-    // Delete the cookie named "userSession"
-    deleteCookie("userSession");
-
-
-
-
-
-
-
+      })
+    })()
 
   </script>
 
