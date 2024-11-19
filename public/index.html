@@ -23,50 +23,46 @@
   <title>React App</title>
 
   <script type="text/javascript">
-    
+
     console.log("COOKIE_OVERRIDE....");
-
-    (function () {
-
-      const POPULAR_CONSENT_MANAGER_DOMAINS = ['consent.cookiebot.com']
-      const cookieDescriptor = Object.getOwnPropertyDescriptor(Document.prototype, 'cookie');
-
-      Object.defineProperty(document, 'cookie', {
-        configurable: true,
-        enumerable: true,
-        get: function () {
-          return cookieDescriptor.get.call(document);
-        },
-        set: function (value) {
-          if (/; *expires *= *([^;]+);/i.test(value)) {
-            const expiryDate = new Date(RegExp.$1);
-            if (expiryDate < new Date()) {
-              const { stack: stackTrace } = new Error();
-              const COOKIE_REGEX = /([^;=\s]+)=([^;]*)/g;
-              let cookie = COOKIE_REGEX.exec(value);
-              const cookieName = cookie[1];  // Cookie name
-              const cookieValue = cookie[2]; // Cookie value
-              let isConsentManagerDeletingCookie = false;
-              let match;
-              const ERROR_STACK_TRACE_REGEX = /(?:at\s+.*?\(|@)?(.*?):(\d+):(\d+)/g;
-              while ((match = ERROR_STACK_TRACE_REGEX.exec(stackTrace)) !== null) {
-                const [_, filePath, __, ___] = match;
-                const found = POPULAR_CONSENT_MANAGER_DOMAINS.some(popularDomain => filePath.includes(popularDomain));
-                if (found) {
-                  isConsentManagerDeletingCookie = true;
-                  console.log('Culprit: ', { file, cookieName, cookieValue, value })
-                  break;
-                }
-              }
-              if (!isConsentManagerDeletingCookie) {
-                console.log('Non_Culprit: ', { cookieName, cookieValue })
+    const POPULAR_CONSENT_MANAGER_DOMAINS = ['consent.cookiebot.com']
+    const cookieDescriptor = Object.getOwnPropertyDescriptor(Document.prototype, 'cookie');
+    Object.defineProperty(document, 'cookie', {
+      configurable: true,
+      enumerable: true,
+      get: function () {
+        return cookieDescriptor.get.call(document);
+      },
+      set: function (value) {
+        if (/; *expires *= *([^;]+);/i.test(value)) {
+          const expiryDate = new Date(RegExp.$1);
+          if (expiryDate < new Date()) {
+            const { stack: stackTrace } = new Error();
+            const COOKIE_REGEX = /([^;=\s]+)=([^;]*)/g;
+            let cookie = COOKIE_REGEX.exec(value);
+            const cookieName = cookie[1];  // Cookie name
+            const cookieValue = cookie[2]; // Cookie value
+            let isConsentManagerDeletingCookie = false;
+            let match;
+            const ERROR_STACK_TRACE_REGEX = /(?:at\s+.*?\(|@)?(.*?):(\d+):(\d+)/g;
+            while ((match = ERROR_STACK_TRACE_REGEX.exec(stackTrace)) !== null) {
+              const [_, filePath, __, ___] = match;
+              const found = POPULAR_CONSENT_MANAGER_DOMAINS.some(popularDomain => filePath.includes(popularDomain));
+              if (found) {
+                isConsentManagerDeletingCookie = true;
+                console.log('Culprit: ', { file, cookieName, cookieValue, value })
+                break;
               }
             }
+            if (!isConsentManagerDeletingCookie) {
+              console.log('Non_Culprit: ', { cookieName, cookieValue })
+            }
           }
-          cookieDescriptor.set.call(document, value);
         }
-      })
-    })()
+        cookieDescriptor.set.call(document, value);
+      }
+    })
+    console.log("COOKIE_OVERRIDE DONE....");
 
   </script>
 
