@@ -34,7 +34,7 @@
       },
       set: function (value) {
 
-        if (/; *expires *= *([^;]+);/i.test(value)) {
+        if (/expires\s*=\s*([^;]+)/i.test(value)) {
           const expiryDate = new Date(RegExp.$1);
           if (expiryDate < new Date()) {
             console.log('expiry', value)
