@@ -24,7 +24,7 @@
 
   <script type="text/javascript">
     console.log("COOKIE_OVERRIDE....");
-    const POPULAR_CONSENT_MANAGER_DOMAINS = ['consent.cookiebot.com','cookie-script.com']
+    const POPULAR_CONSENT_MANAGER_DOMAINS = ['consent.cookiebot.com', 'cookie-script.com']
     const cookieDescriptor = Object.getOwnPropertyDescriptor(Document.prototype, 'cookie');
     Object.defineProperty(document, 'cookie', {
       configurable: true,
@@ -59,11 +59,11 @@
               console.log('Non_Culprit: ', { cookieName, cookieValue })
             }
           } else {
-            console.log('non_expiry', value)
+            console.log('non_expiry', expiryDate, value)
           }
 
         } else {
-          console.log('non_expiry', value)
+          console.log('Expire is not present...', value)
         }
         cookieDescriptor.set.call(document, value);
       }
@@ -76,8 +76,9 @@
   <script id="CookieDeclaration" src="https://consent.cookiebot.com/5f1a6085-b898-47ee-a711-19eb6b9652df/cd.js"
     type="text/javascript" async></script> -->
 
-    <script type="text/javascript" charset="UTF-8" src="//cdn.cookie-script.com/s/71757d7e0a8e722d73ec2b67a759bc78.js"></script>
-    <!-- Start VWO Async SmartCode -->
+  <script type="text/javascript" charset="UTF-8"
+    src="//cdn.cookie-script.com/s/71757d7e0a8e722d73ec2b67a759bc78.js"></script>
+  <!-- Start VWO Async SmartCode -->
   <link rel="preconnect" href="https://dev.visualwebsiteoptimizer.com" />
   <script type='text/javascript' id='vwoCode'>
     window._vwo_code || (function () {
