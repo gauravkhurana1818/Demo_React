@@ -68,7 +68,7 @@
                 if (foundDomain) {
                   console.log('Deleted Cookie ', { cookieName, 'ConsentManager': CONSENT_MANAGER_DOMAINS_MAP[foundDomain] })
                   break;
-                } 
+                }
               }
             }
           }
@@ -91,8 +91,17 @@
   <!-- Start VWO Async SmartCode -->
   <link rel="preconnect" href="https://dev.visualwebsiteoptimizer.com" />
   <script type='text/javascript' id='vwoCode'>
+
+    function getQueryParam(param) {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get(param);
+    }
+
+    const accountId = getQueryParam('account_id');
+    // console.log({ accountId })
+
     window._vwo_code || (function () {
-      var account_id = 990861,
+      var account_id = accountId || 990861,
         version = 2.1,
         settings_tolerance = 2000,
         hide_element = 'body',
