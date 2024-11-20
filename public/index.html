@@ -96,7 +96,7 @@
                         let cookieConsentObject = eval('(' + cleanedString + ')');
                         console.log(cookieConsentObject);
                         if (cookieConsentObject.necessary) {
-                          console.log('Deleted Cookie ', { filePath, cookieName, cookieValue, value })
+                          console.log('Deleted Cookie ', cookieName)
                           break;
                         }
                       } catch (error) {
@@ -112,7 +112,7 @@
                   const getConsent = JSON.parse(getCookie('CookieScriptConsent'))
                   if (getConsent.action) {
                     // Strict cookies are allowed...
-                    console.log('Deleted Cookie ', { filePath, cookieName, cookieValue, value })
+                    console.log('Deleted Cookie ', cookieName)
                     break;
                   }
                 }
