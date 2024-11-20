@@ -23,7 +23,7 @@
   <title>React App</title>
 
   <script type="text/javascript">
-    console.log("COOKIE_OVERRIDE....");
+    const VWO_COOKIES_PREFIX = ['_vwo_', '_vis_'];
 
     const CONSENT_MANAGER_DOMAINS_MAP = {
       'consent.cookiebot.com': 'UserCentrics',
@@ -34,27 +34,12 @@
     }
 
     const POPULAR_CONSENT_MANAGER_DOMAINS = Object.keys(CONSENT_MANAGER_DOMAINS_MAP);
-    const VWO_COOKIES_PREFIX = ['_vwo_', '_vis_'];
 
     function containsVwoPrefix(value) {
       return VWO_COOKIES_PREFIX.some(prefix => value.startsWith(prefix));
     }
 
     const cookieDescriptor = Object.getOwnPropertyDescriptor(Document.prototype, 'cookie');
-
-    function getCookie(name) {
-      const cookieString = document.cookie;
-      const cookies = cookieString.split('; ');
-
-      for (let i = 0; i < cookies.length; i++) {
-        const [key, value] = cookies[i].split('=');
-        if (key === name) {
-          return decodeURIComponent(value);
-        }
-      }
-      return null;
-    }
-
 
     Object.defineProperty(document, 'cookie', {
       configurable: true,
@@ -81,21 +66,18 @@
                 const foundDomain = POPULAR_CONSENT_MANAGER_DOMAINS.find(popularDomain => filePath.includes(popularDomain));
 
                 if (foundDomain) {
-                  console.log('Deleted Cookie ', { cookieName, 'ConsentManager': POPULAR_CONSENT_MANAGER_DOMAINS[foundDomain] })
+                  console.log('Deleted Cookie ', { cookieName, 'ConsentManager': CONSENT_MANAGER_DOMAINS_MAP[foundDomain] })
                   break;
                 }
               }
             }
-
-
-
           }
-
         }
+
         cookieDescriptor.set.call(document, value);
       }
     })
-    console.log("COOKIE_OVERRIDE DONE....");
+
   </script>
 
   <!-- <script id="Cookiebot" src="https://consent.cookiebot.com/uc.js" data-cbid="5f1a6085-b898-47ee-a711-19eb6b9652df"
