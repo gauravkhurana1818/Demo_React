@@ -60,6 +60,7 @@
       }
       validateCookieConsent() {
           const cookieDescriptor = Object.getOwnPropertyDescriptor(Document.prototype, 'cookie');
+          const context = this;
           Object.defineProperty(document, 'cookie', {
               configurable: true,
               enumerable: true,
@@ -71,14 +72,14 @@
                   if (/expires\s*=\s*([^;]+)/i.test(value)) {
                       const expiryDate = new Date(RegExp.$1);
                       if (expiryDate < new Date()) {
-                          this.handleExpiredCookie(value);
+                          context.handleExpiredCookie(value);
                       }
                   }
                   // Check for `max-age` attribute
                   if (/max-age\s*=\s*(-?\d+)/i.test(value)) {
                       const maxAge = parseInt(RegExp.$1, 10);
                       if (maxAge <= 0) {
-                          this.handleExpiredCookie(value);
+                          context.handleExpiredCookie(value);
                       }
                   }
                   cookieDescriptor.set.call(document, value);
@@ -93,6 +94,7 @@
       }
   }
   const consentValidator = new ValidateCookiesConsent();
+
   consentValidator.init();
 
     // const VWO_COOKIES_PREFIX = ['_vwo_', '_vis_'];
