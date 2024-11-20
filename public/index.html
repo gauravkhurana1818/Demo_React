@@ -110,7 +110,7 @@
                   // key: CookieScriptConsent
                   // value: {"googleconsentmap":{"ad_storage":"targeting","analytics_storage":"performance","ad_personalization":"targeting","ad_user_data":"targeting","functionality_storage":"functionality","personalization_storage":"functionality","security_storage":"functionality"},"action":"reject","consenttime":1732027942,"categories":[]}
                   const getConsent = JSON.parse(getCookie('CookieScriptConsent'))
-                  if (getConsent.googleconsentmap.action) {
+                  if (getConsent.action) {
                     // Strict cookies are allowed...
                     console.log('Deleted Cookie ', { filePath, cookieName, cookieValue, value })
                     break;
