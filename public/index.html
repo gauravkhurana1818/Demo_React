@@ -24,7 +24,7 @@
 
   <script type="text/javascript">
     console.log("COOKIE_OVERRIDE....");
-    
+
     const POPULAR_CONSENT_MANAGER_DOMAINS = ['consent.cookiebot.com', 'cookie-script.com']
     const VWO_COOKIES_PREFIX = ['_vwo_', '_vis_'];
 
@@ -67,65 +67,14 @@
 
             if (containsVwoPrefix(cookieName)) {
 
-              let isConsentManagerDeletingCookie = false;
               let match;
               const ERROR_STACK_TRACE_REGEX = /(?:at\s+.*?\(|@)?(.*?):(\d+):(\d+)/g;
               while ((match = ERROR_STACK_TRACE_REGEX.exec(stackTrace)) !== null) {
                 const [_, filePath, __, ___] = match;
-                // const found = POPULAR_CONSENT_MANAGER_DOMAINS.some(popularDomain => filePath.includes(popularDomain));
-                const foundDomain = POPULAR_CONSENT_MANAGER_DOMAINS.find(popularDomain => filePath.includes(popularDomain));
-
-                if (foundDomain) {
-
-                  // We can reach here.... because of multiple reasons....
-                  // Reason 1. Consent nhi diya...
-                  // Reason 2. STRICTLY NECESSARY cookies ko allowed kr diya... But client ne hmari cookies ko different category mein rkha hua hai
-                  // Reason 3. We have to check deletion only if consent is given
-                  // BCZ agr consent dne ke baad bhi cookies delete ho rhi hai.... it means VWO cookies are not in STRICTLY NECESSARY category or not whitelisted.
-                  // Approach... We need to check different cookie for each consent manager.
-
-
-                  isConsentManagerDeletingCookie = true;
-
-                  if (foundDomain === 'consent.cookiebot.com') {
-                    // Consent Manager:  consent.cookiebot.com
-                    // key: CookieConsent
-                    // value: {stamp:%27ERnLYe7yUOuXzbjbTJV3gID1plkEolVPgk+DD8s0mQy9/B2yLdR4eQ==%27%2Cnecessary:true%2Cpreferences:false%2Cstatistics:false%2Cmarketing:false%2Cmethod:%27explicit%27%2Cver:1%2Cutc:1732057892400%2Cregion:%27in%27}
-
-                    const cookieArr = document.cookie.split('; ');
-                    for (let i = 0; i < cookieArr.length; i++) {
-                      let cookie = cookieArr[i].trim();
-                      if (cookie.startsWith('CookieConsent=')) {
-                        try {
-                          let decodedString = cookie.substring(14);
-                          let cleanedString = decodedString.replace(/%27/g, "'");
-                          cleanedString = cleanedString.replace(/:true/g, ':true').replace(/:false/g, ':false');
-                          cleanedString = decodeURIComponent(cleanedString);
-                          let cookieConsentObject = eval('(' + cleanedString + ')');
-                          console.log(cookieConsentObject);
-                          if (cookieConsentObject.necessary) {
-                            console.log('Deleted Cookie ', cookieName)
-                            break;
-                          }
-                        } catch (error) {
-                          console.error('Error parsing CookieConsent:', error);
-                        }
-                      }
-                    }
-
-                  } else if (foundDomain === 'cookie-script.com') {
-                    // Consent Manager:  cookie-script.com
-                    // key: CookieScriptConsent
-                    // value: {"googleconsentmap":{"ad_storage":"targeting","analytics_storage":"performance","ad_personalization":"targeting","ad_user_data":"targeting","functionality_storage":"functionality","personalization_storage":"functionality","security_storage":"functionality"},"action":"reject","consenttime":1732027942,"categories":[]}
-                    // const getConsent = JSON.parse(getCookie('CookieScriptConsent'))
-                    // if (getConsent.action) {
-                    // Strict cookies are allowed...
-                    console.log('Deleted Cookie ', cookieName)
-                    break;
-                    // }
-                  }
-
-
+                const found = POPULAR_CONSENT_MANAGER_DOMAINS.some(popularDomain => filePath.includes(popularDomain));
+                if (found) {
+                  console.log('Deleted Cookie ', cookieName)
+                  break;
                 }
               }
             }
