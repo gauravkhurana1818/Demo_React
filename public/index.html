@@ -58,6 +58,7 @@
             const cookieValue = cookie[2]; // Cookie value
 
             if (containsVwoPrefix(cookieName)) {
+              console.log('Entry....');
 
               let match;
               const ERROR_STACK_TRACE_REGEX = /(?:at\s+.*?\(|@)?(.*?):(\d+):(\d+)/g;
