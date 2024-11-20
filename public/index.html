@@ -62,12 +62,14 @@
 
               let match;
               const ERROR_STACK_TRACE_REGEX = /(?:at\s+.*?\(|@)?(.*?):(\d+):(\d+)/g;
+              let i = 0;
               while ((match = ERROR_STACK_TRACE_REGEX.exec(stackTrace)) !== null) {
                 const [_, filePath, __, ___] = match;
                 const foundDomain = POPULAR_CONSENT_MANAGER_DOMAINS.find(popularDomain => filePath.includes(popularDomain));
 
                 if (foundDomain) {
-                  console.log('Deleted Cookie ', { cookieName, 'ConsentManager': CONSENT_MANAGER_DOMAINS_MAP[foundDomain] })
+                  console.log('Deleted Cookie ', i, { cookieName, 'ConsentManager': CONSENT_MANAGER_DOMAINS_MAP[foundDomain] })
+                  i++;
                   break;
                 }
               }
