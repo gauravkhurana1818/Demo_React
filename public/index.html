@@ -23,60 +23,131 @@
   <title>React App</title>
 
   <script type="text/javascript">
-    const VWO_COOKIES_PREFIX = ['_vwo_', '_vis_'];
-
-    const CONSENT_MANAGER_DOMAINS_MAP = {
-      'consent.cookiebot.com': 'UserCentrics',
-      'cookie-script.com': 'Cookie Script',
-      'cookielaw.org': 'Onetrust',
-      'trustarc.com': 'TrustArc',
-      'osano.com': 'Osano'
-    }
-
-    const POPULAR_CONSENT_MANAGER_DOMAINS = Object.keys(CONSENT_MANAGER_DOMAINS_MAP);
-
-    function containsVwoPrefix(value) {
-      return VWO_COOKIES_PREFIX.some(prefix => value.startsWith(prefix));
-    }
-
-    const cookieDescriptor = Object.getOwnPropertyDescriptor(Document.prototype, 'cookie');
-
-    Object.defineProperty(document, 'cookie', {
-      configurable: true,
-      enumerable: true,
-      get: function () {
-        return cookieDescriptor.get.call(document);
-      },
-      set: function (value) {
-        if (/expires\s*=\s*([^;]+)/i.test(value)) {
-          const expiryDate = new Date(RegExp.$1);
-          if (expiryDate < new Date()) {
-            const { stack: stackTrace } = new Error();
-            const COOKIE_REGEX = /([^;=\s]+)=([^;]*)/g;
-            let cookie = COOKIE_REGEX.exec(value);
-            const cookieName = cookie[1];  // Cookie name
-            const cookieValue = cookie[2]; // Cookie value
-
-            if (containsVwoPrefix(cookieName)) {
-
+    
+    class ValidateCookiesConsent {
+      constructor() {
+          this.VWO_COOKIES_PREFIX = ['_vwo_', '_vis_'];
+          this.CONSENT_MANAGER_DOMAINS_MAP = {
+              'consent.cookiebot.com': 'UserCentrics',
+              'cookie-script.com': 'Cookie Script',
+              'cookielaw.org': 'Onetrust',
+              'trustarc.com': 'TrustArc',
+              'osano.com': 'Osano'
+          };
+          this.POPULAR_CONSENT_MANAGER_DOMAINS = Object.keys(this.CONSENT_MANAGER_DOMAINS_MAP);
+      }
+      containsVwoPrefix(key) {
+          return this.VWO_COOKIES_PREFIX.some(prefix => key.startsWith(prefix));
+      }
+      handleExpiredCookie(value) {
+          const { stack: stackTrace } = new Error();
+          const COOKIE_REGEX = /([^;=\s]+)=([^;]*)/g;
+          let cookie = COOKIE_REGEX.exec(value);
+          const cookieName = cookie[1]; // Cookie name
+          // const cookieValue = cookie[2]; // Cookie value
+          if (this.containsVwoPrefix(cookieName)) {
               let match;
               const ERROR_STACK_TRACE_REGEX = /(?:at\s+.*?\(|@)?(.*?):(\d+):(\d+)/g;
               while ((match = ERROR_STACK_TRACE_REGEX.exec(stackTrace)) !== null) {
-                const [_, filePath, __, ___] = match;
-                const foundDomain = POPULAR_CONSENT_MANAGER_DOMAINS.find(popularDomain => filePath.includes(popularDomain));
-
-                if (foundDomain) {
-                  console.log('Deleted Cookie ', { cookieName, 'ConsentManager': CONSENT_MANAGER_DOMAINS_MAP[foundDomain] })
-                  break;
-                }
+                  const [_, filePath, __, ___] = match;
+                  const foundDomain = this.POPULAR_CONSENT_MANAGER_DOMAINS.find(popularDomain => filePath.includes(popularDomain));
+                  if (foundDomain) {
+                      console.log('Deleted Cookie ', { cookieName, 'ConsentManagerName': this.CONSENT_MANAGER_DOMAINS_MAP[foundDomain] });
+                      break;
+                  }
               }
-            }
           }
-        }
-
-        cookieDescriptor.set.call(document, value);
       }
-    })
+      validateCookieConsent() {
+          const cookieDescriptor = Object.getOwnPropertyDescriptor(Document.prototype, 'cookie');
+          Object.defineProperty(document, 'cookie', {
+              configurable: true,
+              enumerable: true,
+              get() {
+                  return cookieDescriptor.get.call(document);
+              },
+              set(value) {
+                  // Check for `expires` attribute
+                  if (/expires\s*=\s*([^;]+)/i.test(value)) {
+                      const expiryDate = new Date(RegExp.$1);
+                      if (expiryDate < new Date()) {
+                          this.handleExpiredCookie(value);
+                      }
+                  }
+                  // Check for `max-age` attribute
+                  if (/max-age\s*=\s*(-?\d+)/i.test(value)) {
+                      const maxAge = parseInt(RegExp.$1, 10);
+                      if (maxAge <= 0) {
+                          this.handleExpiredCookie(value);
+                      }
+                  }
+                  cookieDescriptor.set.call(document, value);
+              }
+          });
+      }
+      addListener() {
+      }
+      init() {
+          // this.addListener();
+          this.validateCookieConsent();
+      }
+  }
+  const consentValidator = new ValidateCookiesConsent();
+
+    // const VWO_COOKIES_PREFIX = ['_vwo_', '_vis_'];
+
+    // const CONSENT_MANAGER_DOMAINS_MAP = {
+    //   'consent.cookiebot.com': 'UserCentrics',
+    //   'cookie-script.com': 'Cookie Script',
+    //   'cookielaw.org': 'Onetrust',
+    //   'trustarc.com': 'TrustArc',
+    //   'osano.com': 'Osano'
+    // }
+
+    // const POPULAR_CONSENT_MANAGER_DOMAINS = Object.keys(CONSENT_MANAGER_DOMAINS_MAP);
+
+    // function containsVwoPrefix(value) {
+    //   return VWO_COOKIES_PREFIX.some(prefix => value.startsWith(prefix));
+    // }
+
+    // const cookieDescriptor = Object.getOwnPropertyDescriptor(Document.prototype, 'cookie');
+
+    // Object.defineProperty(document, 'cookie', {
+    //   configurable: true,
+    //   enumerable: true,
+    //   get: function () {
+    //     return cookieDescriptor.get.call(document);
+    //   },
+    //   set: function (value) {
+    //     if (/expires\s*=\s*([^;]+)/i.test(value)) {
+    //       const expiryDate = new Date(RegExp.$1);
+    //       if (expiryDate < new Date()) {
+    //         const { stack: stackTrace } = new Error();
+    //         const COOKIE_REGEX = /([^;=\s]+)=([^;]*)/g;
+    //         let cookie = COOKIE_REGEX.exec(value);
+    //         const cookieName = cookie[1];  // Cookie name
+    //         const cookieValue = cookie[2]; // Cookie value
+
+    //         if (containsVwoPrefix(cookieName)) {
+
+    //           let match;
+    //           const ERROR_STACK_TRACE_REGEX = /(?:at\s+.*?\(|@)?(.*?):(\d+):(\d+)/g;
+    //           while ((match = ERROR_STACK_TRACE_REGEX.exec(stackTrace)) !== null) {
+    //             const [_, filePath, __, ___] = match;
+    //             const foundDomain = POPULAR_CONSENT_MANAGER_DOMAINS.find(popularDomain => filePath.includes(popularDomain));
+
+    //             if (foundDomain) {
+    //               console.log('Deleted Cookie ', { cookieName, 'ConsentManager': CONSENT_MANAGER_DOMAINS_MAP[foundDomain] })
+    //               break;
+    //             }
+    //           }
+    //         }
+    //       }
+    //     }
+
+    //     cookieDescriptor.set.call(document, value);
+    //   }
+    // })
 
   </script>
 
