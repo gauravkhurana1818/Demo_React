@@ -26,6 +26,21 @@
     console.log("COOKIE_OVERRIDE....");
     const POPULAR_CONSENT_MANAGER_DOMAINS = ['consent.cookiebot.com', 'cookie-script.com']
     const cookieDescriptor = Object.getOwnPropertyDescriptor(Document.prototype, 'cookie');
+
+    function getCookie(name) {
+      const cookieString = document.cookie;
+      const cookies = cookieString.split('; ');
+
+      for (let i = 0; i < cookies.length; i++) {
+        const [key, value] = cookies[i].split('=');
+        if (key === name) {
+          return decodeURIComponent(value);
+        }
+      }
+      return null;
+    }
+
+
     Object.defineProperty(document, 'cookie', {
       configurable: true,
       enumerable: true,
@@ -48,11 +63,61 @@
             const ERROR_STACK_TRACE_REGEX = /(?:at\s+.*?\(|@)?(.*?):(\d+):(\d+)/g;
             while ((match = ERROR_STACK_TRACE_REGEX.exec(stackTrace)) !== null) {
               const [_, filePath, __, ___] = match;
-              const found = POPULAR_CONSENT_MANAGER_DOMAINS.some(popularDomain => filePath.includes(popularDomain));
-              if (found) {
+              // const found = POPULAR_CONSENT_MANAGER_DOMAINS.some(popularDomain => filePath.includes(popularDomain));
+              const foundDomain = POPULAR_CONSENT_MANAGER_DOMAINS.find(popularDomain => filePath.includes(popularDomain));
+
+              if (foundDomain) {
+
+                // We can reach here.... because of multiple reasons....
+                // Reason 1. Consent nhi diya...
+                // Reason 2. STRICTLY NECESSARY cookies ko allowed kr diya... But client ne hmari cookies ko different category mein rkha hua hai
+                // Reason 3. We have to check deletion only if consent is given
+                // BCZ agr consent dne ke baad bhi cookies delete ho rhi hai.... it means VWO cookies are not in STRICTLY NECESSARY category or not whitelisted.
+                // Approach... We need to check different cookie for each consent manager.
+
+
                 isConsentManagerDeletingCookie = true;
-                console.log('AAA: ', { filePath, cookieName, cookieValue, value })
-                break;
+
+                if (foundDomain === 'consent.cookiebot.com') {
+                  // Consent Manager:  consent.cookiebot.com
+                  // key: CookieConsent
+                  // value: {stamp:%27ERnLYe7yUOuXzbjbTJV3gID1plkEolVPgk+DD8s0mQy9/B2yLdR4eQ==%27%2Cnecessary:true%2Cpreferences:false%2Cstatistics:false%2Cmarketing:false%2Cmethod:%27explicit%27%2Cver:1%2Cutc:1732057892400%2Cregion:%27in%27}
+
+                  const cookieArr = document.cookie.split('; ');
+                  for (let i = 0; i < cookieArr.length; i++) {
+                    let cookie = cookieArr[i].trim();
+                    if (cookie.startsWith('CookieConsent=')) {
+
+                      try {
+                        let decodedString = cookie.substring(14);
+                        let cleanedString = decodedString.replace(/%27/g, "'");
+                        cleanedString = cleanedString.replace(/:true/g, ':true').replace(/:false/g, ':false');
+                        cleanedString = decodeURIComponent(cleanedString); 
+                        let cookieConsentObject = eval('(' + cleanedString + ')');
+                        console.log(cookieConsentObject);  
+                        if (cookieConsentObject.necessary) {
+                          console.log('Deleted Cookie ', { filePath, cookieName, cookieValue, value })
+                          break;
+                        }
+                      } catch (error) {
+                        console.error('Error parsing CookieConsent:', error);
+                      }
+                    }
+                  }
+
+                } else if (foundDomain === 'cookie-script.com') {
+                  // Consent Manager:  cookie-script.com
+                  // key: CookieScriptConsent
+                  // value: {"googleconsentmap":{"ad_storage":"targeting","analytics_storage":"performance","ad_personalization":"targeting","ad_user_data":"targeting","functionality_storage":"functionality","personalization_storage":"functionality","security_storage":"functionality"},"action":"reject","consenttime":1732027942,"categories":[]}
+                  const getConsent = JSON.parse(getCookie('CookieScriptConsent'))
+                  if (getConsent.googleconsentmap.action) {
+                    // Strict cookies are allowed...
+                    console.log('Deleted Cookie ', { filePath, cookieName, cookieValue, value })
+                    break;
+                  }
+                }
+
+
               }
             }
             if (!isConsentManagerDeletingCookie) {
@@ -71,15 +136,15 @@
     console.log("COOKIE_OVERRIDE DONE....");
   </script>
 
-<script id="Cookiebot" src="https://consent.cookiebot.com/uc.js" data-cbid="5f1a6085-b898-47ee-a711-19eb6b9652df"
+  <script id="Cookiebot" src="https://consent.cookiebot.com/uc.js" data-cbid="5f1a6085-b898-47ee-a711-19eb6b9652df"
     data-blockingmode="auto" type="text/javascript"></script>
   <script id="CookieDeclaration" src="https://consent.cookiebot.com/5f1a6085-b898-47ee-a711-19eb6b9652df/cd.js"
-    type="text/javascript" async></script>  
+    type="text/javascript" async></script>
 
-    <!-- <script type="text/javascript" charset="UTF-8"
+  <!-- <script type="text/javascript" charset="UTF-8"
     src="//cdn.cookie-script.com/s/71757d7e0a8e722d73ec2b67a759bc78.js"></script>  -->
 
-    <!-- Start VWO Async SmartCode -->
+  <!-- Start VWO Async SmartCode -->
   <link rel="preconnect" href="https://dev.visualwebsiteoptimizer.com" />
   <script type='text/javascript' id='vwoCode'>
     window._vwo_code || (function () {
