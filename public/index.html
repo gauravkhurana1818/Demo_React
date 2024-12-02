@@ -22,7 +22,124 @@
     -->
   <title>React App</title>
   <script type="text/javascript">
-    console.log('Hey.....')
+    console.log('Hey.....');
+
+    class ValidateCookiesConsent {
+    constructor() {
+        this.DUMMY_CAMPAIGN_ID = 99999999;
+        this.DUMMY_GOAL_ID = 99999999;
+        this.currentCookiesList = document.cookie.split('; ').map(cookie => cookie.split('=')[0]);
+        this.dummyVwoCookies = {
+            '_vwo_uuid': '_vwo_uuid',
+            '_vwo_uuid_v2': '_vwo_uuid_v2',
+            '_vis_opt_test_cookie': '_vis_opt_test_cookie',
+            '_vwo_ds': '_vwo_ds',
+            '_vwo_sn': '_vwo_sn',
+            '_vis_opt_s': '_vis_opt_s',
+            [`_vis_opt_exp_${this.DUMMY_CAMPAIGN_ID}_goal_${this.DUMMY_GOAL_ID}`]: '_vis_opt_exp_{CAMPAIGNID}_goal_{GOALID}',
+            [`_vis_opt_exp_${this.DUMMY_CAMPAIGN_ID}_combi`]: '_vis_opt_exp_{CAMPAIGNID}_combi',
+            [`_vis_opt_exp_${this.DUMMY_CAMPAIGN_ID}_exclude`]: '_vis_opt_exp_{CAMPAIGNID}_exclude',
+            [`_vis_opt_exp_${this.DUMMY_CAMPAIGN_ID}_split`]: '_vis_opt_exp_{CAMPAIGNID}_split',
+        };
+        this.restrictedCookies = [];
+        this.consentManagerName = '';
+        this.VWO_COOKIES_PREFIX = ['_vwo_', '_vis_'];
+        this.CONSENT_MANAGER_DOMAINS_MAP = {
+            'consent.cookiebot.com': 'UserCentrics',
+            'cookie-script.com': 'Cookie Script',
+            'cookielaw.org': 'Onetrust',
+            'trustarc.com': 'TrustArc',
+            'osano.com': 'Osano'
+        };
+        this.POPULAR_CONSENT_MANAGER_DOMAINS = Object.keys(this.CONSENT_MANAGER_DOMAINS_MAP);
+    }
+    containsVwoPrefix(key) {
+        return this.VWO_COOKIES_PREFIX.some(prefix => key.startsWith(prefix));
+    }
+    handleExpiredCookie(value) {
+        const { stack: stackTrace } = new Error();
+        const COOKIE_REGEX = /([^;=\s]+)=([^;]*)/g;
+        let cookie = COOKIE_REGEX.exec(value);
+        const cookieName = cookie[1]; // Cookie name
+        // const cookieValue = cookie[2]; // Cookie value
+        if (this.containsVwoPrefix(cookieName)) {
+            let match;
+            const ERROR_STACK_TRACE_REGEX = /(?:at\s+.*?\(|@)?(.*?):(\d+):(\d+)/g;
+            while ((match = ERROR_STACK_TRACE_REGEX.exec(stackTrace)) !== null) {
+                const [_, filePath, __, ___] = match;
+                const foundDomain = this.POPULAR_CONSENT_MANAGER_DOMAINS.find(popularDomain => filePath.includes(popularDomain));
+                if (foundDomain) {
+                    this.restrictedCookies.push(this.dummyVwoCookies[cookieName]);
+                    // console.log('Deleted Cookie ', { cookieName, 'ConsentManagerName': this.CONSENT_MANAGER_DOMAINS_MAP[foundDomain] })
+                    break;
+                }
+            }
+        }
+    }
+    isCookiePresent(cookieName) {
+        return this.currentCookiesList.includes(cookieName);
+    }
+    setSessionCookie(cookieName, cookieValue) {
+        console.log(`${cookieName}=${cookieValue}; path=/;`)
+        document.cookie = `${cookieName}=${cookieValue}; path=/;`;
+    }
+    validateCookieConsent() {
+        const cookieDescriptor = Object.getOwnPropertyDescriptor(Document.prototype, 'cookie');
+        const context = this;
+        Object.defineProperty(document, 'cookie', {
+            configurable: true,
+            enumerable: true,
+            get() {
+                return cookieDescriptor.get.call(document);
+            },
+            set(value) {
+                // Check for `expires` attribute
+                if (/expires\s*=\s*([^;]+)/i.test(value)) {
+                    const expiryDate = new Date(RegExp.$1);
+                    if (expiryDate < new Date()) {
+                        context.handleExpiredCookie(value);
+                    }
+                }
+                // Check for `max-age` attribute
+                if (/max-age\s*=\s*(-?\d+)/i.test(value)) {
+                    const maxAge = parseInt(RegExp.$1, 10);
+                    if (maxAge <= 0) {
+                        context.handleExpiredCookie(value);
+                    }
+                }
+                cookieDescriptor.set.call(document, value);
+            }
+        });
+    }
+
+    addDummyCookies() {
+        const dummyCookies = Object.keys(this.dummyVwoCookies);
+        const dummyValue = 99999999;
+        dummyCookies.forEach((cookieName) => {
+            if (!this.isCookiePresent(cookieName)) {
+                this.setSessionCookie(cookieName, dummyValue);
+            }
+        })
+
+        setTimeout(() => {
+            this.findBlackListedCookies();
+        }, 30000)
+    }
+
+    findBlackListedCookies() {
+        console.log('RestrictedCookies', this.restrictedCookies)
+    }
+
+    init() {
+        this.validateCookieConsent();
+        // Find blacklisted cookies by checking after 30 seconds.
+        this.addDummyCookies()
+
+    }
+}
+const consentValidator = new ValidateCookiesConsent();
+consentValidator.init();
+
   </script>
 
   <!-- <script type="text/javascript">
